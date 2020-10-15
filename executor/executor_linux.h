@@ -263,20 +263,14 @@ static void setup_machine()
 		printf("write to /sys/kernel/debug/x86/nmi_longest_ns failed: %s\n", strerror(errno));
 }
 
-static void df_open(df_detection* dfetch)
+static void df_enable()
 {
 	int fd = open("/sys/kernel/debug/df_detection", O_RDWR);
 	if (fd == -1)
 		fail("open of /sys/kernel/debug/df_detection failed");
-	if (dup2(fd, dfetch->fd) < 0)
-		fail("failed to dup2(%d, %d) df_detection fd", fd, dfetch->fd);
-	close(fd);
-}
-
-static void df_enable(df_detection* dfetch)
-{
-	if (ioctl(dfetch->fd, DF_ENABLE))
+	if (ioctl(fd, DF_ENABLE,KCOV_TRACE_PC))
 		exitf("df enable failed");
+	close(fd);
 	return;
 }
 

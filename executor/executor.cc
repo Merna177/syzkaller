@@ -204,10 +204,6 @@ struct cover_t {
 	char* data_end;
 };
 
-struct df_detection {
-	int fd;	
-};
-
 struct thread_t {
 	int id;
 	bool created;
@@ -242,7 +238,6 @@ struct res_t {
 
 static res_t results[kMaxCommands];
 
-static df_detection dfetch;
 const uint64 kInMagic = 0xbadc0ffeebadface;
 const uint32 kOutMagic = 0xbadf00d;
 
@@ -426,6 +421,7 @@ int main(int argc, char** argv)
 			threads[i].cov.fd = kCoverFd + i;
 			cover_open(&threads[i].cov, false);
 			cover_protect(&threads[i].cov);
+			df_enable();
 		}
 		cover_open(&extra_cov, true);
 		cover_protect(&extra_cov);
@@ -434,7 +430,6 @@ int main(int argc, char** argv)
 			cover_enable(&extra_cov, false, true);
 		}
 	}
-	df_open(&dfetch);
 
 	int status = 0;
 	if (flag_sandbox_none)
@@ -625,7 +620,6 @@ retry:
 			cover_reset(&extra_cov);
 	}
 
-	df_enable(&dfetch);
 	int call_index = 0;
 	uint64 prog_extra_timeout = 0;
 	uint64 prog_extra_cover_timeout = 0;
