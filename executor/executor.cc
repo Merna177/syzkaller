@@ -421,7 +421,6 @@ int main(int argc, char** argv)
 			threads[i].cov.fd = kCoverFd + i;
 			cover_open(&threads[i].cov, false);
 			cover_protect(&threads[i].cov);
-			df_enable();
 		}
 		cover_open(&extra_cov, true);
 		cover_protect(&extra_cov);
@@ -431,6 +430,7 @@ int main(int argc, char** argv)
 		}
 	}
 
+	df_enable();
 	int status = 0;
 	if (flag_sandbox_none)
 		status = do_sandbox_none();
@@ -1073,6 +1073,7 @@ void* worker_thread(void* arg)
 {
 	thread_t* th = (thread_t*)arg;
 	current_thread = th;
+	df_enable();
 	if (flag_coverage)
 		cover_enable(&th->cov, flag_comparisons, false);
 	for (;;) {
