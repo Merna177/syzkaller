@@ -268,7 +268,7 @@ static void df_enable()
 	int fd = open("/sys/kernel/debug/df_detection", O_RDWR);
 	if (fd == -1)
 		fail("open of /sys/kernel/debug/df_detection failed");
-	if (ioctl(fd, DF_ENABLE,KCOV_TRACE_PC))
+	if (ioctl(fd, DF_ENABLE))
 		exitf("df enable failed");
 	close(fd);
 	return;
