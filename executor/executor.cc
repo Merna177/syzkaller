@@ -430,7 +430,6 @@ int main(int argc, char** argv)
 		}
 	}
 
-	df_enable();
 	int status = 0;
 	if (flag_sandbox_none)
 		status = do_sandbox_none();
@@ -600,6 +599,7 @@ void reply_execute(int status)
 // execute_one executes program stored in input_data.
 void execute_one()
 {
+	df_enable();
 	// Duplicate global collide variable on stack.
 	// Fuzzer once come up with ioctl(fd, FIONREAD, 0x920000),
 	// where 0x920000 was exactly collide address, so every iteration reset collide to 0.
