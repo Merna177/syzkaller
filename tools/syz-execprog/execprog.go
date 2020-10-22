@@ -335,8 +335,5 @@ func createConfig(target *prog.Target,
 	if featuresFlags["wifi"].Enabled && features[host.FeatureWifiEmulation].Enabled {
 		config.Flags |= ipc.FlagEnableWifi
 	}
-	if features[host.FeatureDoubleFetch].Enabled {
-		config.Flags |= ipc.FlagDoubleFetch
-	}
 	return config, execOpts
 }

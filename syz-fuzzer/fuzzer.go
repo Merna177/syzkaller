@@ -124,9 +124,6 @@ func createIPCConfig(features *host.Features, config *ipc.Config) {
 	if features[host.FeatureWifiEmulation].Enabled {
 		config.Flags |= ipc.FlagEnableWifi
 	}
-	if features[host.FeatureDoubleFetch].Enabled {
-		config.Flags |= ipc.FlagDoubleFetch
-	}
 }
 
 // nolint: funlen
