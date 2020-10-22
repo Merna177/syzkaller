@@ -408,6 +408,9 @@ func (ctx *Context) createSyzTest(p *prog.Prog, sandbox string, threaded, cov bo
 	if ctx.Features[host.FeatureWifiEmulation].Enabled {
 		cfg.Flags |= ipc.FlagEnableWifi
 	}
+	if ctx.Features[host.FeatureDoubleFetch].Enabled {
+		cfg.Flags |= ipc.FlagDoubleFetch
+	}
 	if ctx.Debug {
 		cfg.Flags |= ipc.FlagDebug
 	}

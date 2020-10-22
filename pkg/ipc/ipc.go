@@ -42,6 +42,7 @@ const (
 	FlagEnableDevlinkPCI                         // setup devlink PCI device
 	FlagEnableVhciInjection                      // setup and use /dev/vhci for hci packet injection
 	FlagEnableWifi                               // setup and use mac80211_hwsim for wifi emulation
+	FlagDoubleFetch			             // detect double fetch bugs
 )
 
 // Per-exec flags for ExecOpts.Flags.
@@ -54,6 +55,7 @@ const (
 	FlagCollectComps                       // collect KCOV comparisons
 	FlagThreaded                           // use multiple threads to mitigate blocked syscalls
 	FlagCollide                            // collide syscalls to provoke data races
+	FlagDoubleFetch			       // Collect Double fetching bug 
 )
 
 type ExecOpts struct {

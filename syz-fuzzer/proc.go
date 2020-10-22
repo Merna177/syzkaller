@@ -20,6 +20,7 @@ import (
 	"github.com/google/syzkaller/pkg/rpctype"
 	"github.com/google/syzkaller/pkg/signal"
 	"github.com/google/syzkaller/prog"
+	"strings"
 )
 
 // Proc represents a single fuzzing process (executor).
@@ -253,6 +254,11 @@ func (proc *Proc) execute(execOpts *ipc.ExecOpts, p *prog.Prog, flags ProgTypes,
 		return nil
 	}
 	calls, extra := proc.fuzzer.checkNewSignal(p, info)
+	for _, call := range p.Calls {
+		if (strings.Contains(call.Meta.Name,"add_key")){
+			execOpts.Flags |= (1 << 6);
+		}
+	}
 	for _, callIndex := range calls {
 		proc.enqueueCallTriage(p, flags, callIndex, info.Calls[callIndex])
 	}
