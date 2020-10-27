@@ -248,19 +248,36 @@ func (proc *Proc) executeHintSeed(p *prog.Prog, call int) {
 	})
 }
 
-func (proc *Proc) forEachArg(arg prog.Arg){
-	typ, ok := arg.Type().(*prog.LenType)
-	if ok{
-		//TODO: Filtering Function 
-		fmt.Printf(typ);
+func (proc *Proc) forEachArg(dst *prog.ConstArg, path []string, args []prog.Arg, fields []prog.Field){
+	elem := path[0]
+	var offset uint64
+	for i, buf := range args {
+		if elem != fields[i].Name {
+			offset += buf.Size()
+			continue
+		}
+		//// Returns inner arg for pointer args.
+		fmt.Printf("Fields Name %s  and elem %s\n",fields[i].Name,elem)
+		fmt.Printf("BUFFER %+v\n",buf)
+		buf = prog.InnerArg(buf)
+		fmt.Printf("BUFFER after inner arg %+v\n",buf)
+		panic("Test")
 	}
 }
 
 func (proc *Proc) filterArguments(p *prog.Prog){
 	for _, call := range p.Calls {
 		for _, arg := range call.Args{
-			proc.forEachArg(arg);
-			panic("error bug typelen");
+			typ, ok := arg.Type().(*prog.LenType)
+			if !ok {
+				continue
+			}
+			a := arg.(*prog.ConstArg)
+			if typ.Path[0] == prog.SyscallRef {
+				proc.forEachArg(a, typ.Path[1:], call.Args, call.Meta.Args)
+			} else {
+				proc.forEachArg(a, typ.Path, call.Args, call.Meta.Args)
+			}
 		}
 	}
 }
