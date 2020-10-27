@@ -248,21 +248,26 @@ func (proc *Proc) executeHintSeed(p *prog.Prog, call int) {
 	})
 }
 
-func (proc *Proc) forEachArg(dst *prog.ConstArg, path []string, args []prog.Arg, fields []prog.Field){
+func (proc *Proc) getArg(dst *prog.ConstArg, path []string, fields []prog.Field, call *prog.Call, p *prog.Prog){
 	elem := path[0]
 	var offset uint64
-	for i, buf := range args {
-		if elem != fields[i].Name {
-			offset += buf.Size()
-			continue
+	var i = 0
+	var pointerIndex = -1
+	prog.ForeachArg(call, func(arg prog.Arg, ctx *prog.ArgCtx) {
+		if elem == fields[i].Name {
+		pointerIndex = i
+		if ctx.Base == nil {
+			return
 		}
-		//// Returns inner arg for pointer args.
-		fmt.Printf("Fields Name %s  and elem %s\n",fields[i].Name,elem)
-		fmt.Printf("BUFFER %+v\n",buf)
-		buf = prog.InnerArg(buf)
-		fmt.Printf("BUFFER after inner arg %+v\n",buf)
-		panic("Test")
-	}
+		addr := p.Target.PhysicalAddr(ctx.Base) + ctx.Offset
+		addr -= arg.Type().UnitOffset()
+		//addr is what we need 
+		return;
+		} else {
+			offset += arg.Size()
+		}
+		i++
+	})
 }
 
 func (proc *Proc) filterArguments(p *prog.Prog){
@@ -274,9 +279,9 @@ func (proc *Proc) filterArguments(p *prog.Prog){
 			}
 			a := arg.(*prog.ConstArg)
 			if typ.Path[0] == prog.SyscallRef {
-				proc.forEachArg(a, typ.Path[1:], call.Args, call.Meta.Args)
+				proc.getArg(a, typ.Path[1:], call.Meta.Args, call, p)
 			} else {
-				proc.forEachArg(a, typ.Path, call.Args, call.Meta.Args)
+				proc.getArg(a, typ.Path, call.Meta.Args, call, p)
 			}
 		}
 	}
