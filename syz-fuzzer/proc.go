@@ -20,7 +20,7 @@ import (
 	"github.com/google/syzkaller/pkg/rpctype"
 	"github.com/google/syzkaller/pkg/signal"
 	"github.com/google/syzkaller/prog"
-	"strings"
+	//"strings"
 )
 
 // Proc represents a single fuzzing process (executor).
@@ -248,17 +248,30 @@ func (proc *Proc) executeHintSeed(p *prog.Prog, call int) {
 	})
 }
 
+func (proc *Proc) forEachArg(arg prog.Arg){
+	typ, ok := arg.Type().(*prog.LenType)
+	if ok{
+		//TODO: Filtering Function 
+		fmt.Printf(typ);
+	}
+}
+
+func (proc *Proc) filterArguments(p *prog.Prog){
+	for _, call := range p.Calls {
+		for _, arg := range call.Args{
+			proc.forEachArg(arg);
+			panic("error bug typelen");
+		}
+	}
+}
+
 func (proc *Proc) execute(execOpts *ipc.ExecOpts, p *prog.Prog, flags ProgTypes, stat Stat) *ipc.ProgInfo {
 	info := proc.executeRaw(execOpts, p, stat)
 	if info == nil {
 		return nil
 	}
 	calls, extra := proc.fuzzer.checkNewSignal(p, info)
-	for _, call := range p.Calls {
-		if (strings.Contains(call.Meta.Name,"add_key")){
-			execOpts.Flags |= (1 << 6);
-		}
-	}
+	proc.filterArguments(p)
 	for _, callIndex := range calls {
 		proc.enqueueCallTriage(p, flags, callIndex, info.Calls[callIndex])
 	}
