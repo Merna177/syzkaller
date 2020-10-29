@@ -35,6 +35,11 @@ type Proc struct {
 	execOptsNoCollide *ipc.ExecOpts
 }
 
+type pair struct {
+	addr uint64
+	len uint64
+}
+  
 func newProc(fuzzer *Fuzzer, pid int) (*Proc, error) {
 	env, err := ipc.MakeEnv(fuzzer.config, pid)
 	if err != nil {
@@ -248,41 +253,46 @@ func (proc *Proc) executeHintSeed(p *prog.Prog, call int) {
 	})
 }
 
-func (proc *Proc) getArg(dst *prog.ConstArg, path []string, fields []prog.Field, call *prog.Call, p *prog.Prog){
+func (proc *Proc) getPointer(dst *prog.ConstArg, path []string, fields []prog.Field, call *prog.Call, p *prog.Prog) uint64{
 	elem := path[0]
-	var offset uint64
 	var i = 0
-	var pointerIndex = -1
+	var addr uint64
 	prog.ForeachArg(call, func(arg prog.Arg, ctx *prog.ArgCtx) {
 		if elem == fields[i].Name {
-		pointerIndex = i
-		if ctx.Base == nil {
+			if ctx.Base == nil {
+				return
+			}
+			/*TODO: 
+			1) check if we have to use InnerArg function or not to check on pointer 
+			2) make some checks on pointer argument to avoid any error
+			*/
+			addr = p.Target.PhysicalAddr(ctx.Base) + ctx.Offset
+			addr -= arg.Type().UnitOffset()
 			return
-		}
-		addr := p.Target.PhysicalAddr(ctx.Base) + ctx.Offset
-		addr -= arg.Type().UnitOffset()
-		//addr is what we need 
-		return;
-		} else {
-			offset += arg.Size()
 		}
 		i++
 	})
+	return addr
 }
-
+//TODO: move these functions to prog package
 func (proc *Proc) filterArguments(p *prog.Prog){
 	for _, call := range p.Calls {
-		for _, arg := range call.Args{
+		var ranges []pair
+		last := len(call.Args)-1
+		for i := range call.Args{
+			arg := call.Args[last - i]
 			typ, ok := arg.Type().(*prog.LenType)
 			if !ok {
 				continue
 			}
 			a := arg.(*prog.ConstArg)
+			var addr uint64
 			if typ.Path[0] == prog.SyscallRef {
-				proc.getArg(a, typ.Path[1:], call.Meta.Args, call, p)
+				addr = proc.getPointer(a, typ.Path[1:], call.Meta.Args, call, p)
 			} else {
-				proc.getArg(a, typ.Path, call.Meta.Args, call, p)
+				addr = proc.getPointer(a, typ.Path, call.Meta.Args, call, p)
 			}
+			ranges = append(ranges,pair{addr, a.Val})
 		}
 	}
 }
