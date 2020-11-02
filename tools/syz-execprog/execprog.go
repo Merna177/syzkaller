@@ -138,6 +138,12 @@ func (ctx *Context) run(pid int) {
 			return
 		}
 		entry := ctx.entries[idx%len(ctx.entries)]
+		dfDisable := prog.DFetchAnalysis(entry.P)
+		if dfDisable {
+			fmt.Printf("Intersection Detected \n")
+		}else {
+			fmt.Printf("No Intersection Detected \n")
+		}
 		ctx.execute(pid, env, entry)
 	}
 }
