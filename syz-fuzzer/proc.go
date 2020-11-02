@@ -12,7 +12,6 @@ import (
 	"sync/atomic"
 	"syscall"
 	"time"
-	"sort"
 
 	"github.com/google/syzkaller/pkg/cover"
 	"github.com/google/syzkaller/pkg/hash"
@@ -35,11 +34,6 @@ type Proc struct {
 	execOptsNoCollide *ipc.ExecOpts
 }
 
-type pair struct {
-	addr uint64
-	len uint64
-}
-  
 func newProc(fuzzer *Fuzzer, pid int) (*Proc, error) {
 	env, err := ipc.MakeEnv(fuzzer.config, pid)
 	if err != nil {
@@ -253,95 +247,16 @@ func (proc *Proc) executeHintSeed(p *prog.Prog, call int) {
 	})
 }
 
-func (proc *Proc) detectIntersection(ranges[]pair) bool{
-	sort.SliceStable(ranges, func(i, j int) bool {
-		return ranges[i].addr < ranges[j].addr
-	    })
-	for i := 0; i < len(ranges)-1; i++ {
-		if ranges[i+1].addr < ranges[i].addr + ranges[i].len {
-			return true
-		}
-	}
-	return false
-}
-
-func (proc *Proc) filterArguments(call *prog.Call, pointers map[prog.Arg]uint64, p *prog.Prog) bool{
-	var ranges[]pair
-	prog.ForeachArg(call, func(arg prog.Arg, ctx *prog.ArgCtx) {
-		switch a := arg.(type) {
-			case *prog.PointerArg:
-				if ctx.Base == nil {
-					return
-				}
-				value, ok := pointers[arg]
-				addr := p.Target.PhysicalAddr(ctx.Base) + ctx.Offset
-				addr -= arg.Type().UnitOffset()
-				if ok {
-					ranges = append(ranges, pair{addr, value})
-				}else if a.Res != nil {
-					ranges = append(ranges, pair{addr, a.Res.Size()})
-				}
-			case *prog.GroupArg:
-				addr := p.Target.PhysicalAddr(ctx.Base) + ctx.Offset
-				addr -= arg.Type().UnitOffset()
-				ranges = append(ranges, pair{addr, arg.Size()})
-		}
-
-	})
-	return proc.detectIntersection(ranges)
-}
-
-func (proc *Proc) getPointer(path []string, fields []prog.Field, call *prog.Call) prog.Arg{
-	elem := path[0]
-	var pointer prog.Arg 
-	for i, buf := range call.Args {
-		if elem != fields[i].Name {
-			continue
-		}
-		//TODO: Check on pointer for invalid cases 
-		pointer = buf
-		/*buf = InnerArg(buf)
-		if buf == nil {
-			dst.Val = 0 // target is an optional pointer
-			return
-		}*/
-		break
-		
-	}
-	return pointer
-}
-//TODO: move these functions to prog package
-func (proc *Proc) dFetchAnalysis(execOpts *ipc.ExecOpts, p *prog.Prog){
-	for _, call := range p.Calls {
-		pointers := make(map[prog.Arg]uint64)
-		for _, arg := range call.Args{
-			typ, ok := arg.Type().(*prog.LenType)
-			if !ok {
-				continue
-			}
-			lenArg := arg.(*prog.ConstArg)
-			var pointerArg prog.Arg
-			if typ.Path[0] == prog.SyscallRef {
-				pointerArg = proc.getPointer(typ.Path[1:], call.Meta.Args, call)
-			} else {
-				pointerArg = proc.getPointer(typ.Path, call.Meta.Args, call)
-			}
-			pointers[pointerArg] = lenArg.Val
-		}
-		dfDisable := proc.filterArguments(call, pointers, p)
-		if dfDisable {
-			execOpts.Flags |= (1 << 6)
-		}
-	}
-}
-
 func (proc *Proc) execute(execOpts *ipc.ExecOpts, p *prog.Prog, flags ProgTypes, stat Stat) *ipc.ProgInfo {
 	info := proc.executeRaw(execOpts, p, stat)
 	if info == nil {
 		return nil
 	}
 	calls, extra := proc.fuzzer.checkNewSignal(p, info)
-	proc.dFetchAnalysis(execOpts, p)
+	dfDisable := prog.DFetchAnalysis(p)
+	if dfDisable {
+		execOpts.Flags |= (1 << 6)
+	}
 	for _, callIndex := range calls {
 		proc.enqueueCallTriage(p, flags, callIndex, info.Calls[callIndex])
 	}
