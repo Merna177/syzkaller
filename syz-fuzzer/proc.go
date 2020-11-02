@@ -12,6 +12,7 @@ import (
 	"sync/atomic"
 	"syscall"
 	"time"
+	"sort"
 
 	"github.com/google/syzkaller/pkg/cover"
 	"github.com/google/syzkaller/pkg/hash"
@@ -20,7 +21,6 @@ import (
 	"github.com/google/syzkaller/pkg/rpctype"
 	"github.com/google/syzkaller/pkg/signal"
 	"github.com/google/syzkaller/prog"
-	//"strings"
 )
 
 // Proc represents a single fuzzing process (executor).
@@ -253,46 +253,84 @@ func (proc *Proc) executeHintSeed(p *prog.Prog, call int) {
 	})
 }
 
-func (proc *Proc) getPointer(dst *prog.ConstArg, path []string, fields []prog.Field, call *prog.Call, p *prog.Prog) uint64{
-	elem := path[0]
-	var i = 0
-	var addr uint64
-	prog.ForeachArg(call, func(arg prog.Arg, ctx *prog.ArgCtx) {
-		if elem == fields[i].Name {
-			if ctx.Base == nil {
-				return
-			}
-			/*TODO: 
-			1) check if we have to use InnerArg function or not to check on pointer 
-			2) make some checks on pointer argument to avoid any error
-			*/
-			addr = p.Target.PhysicalAddr(ctx.Base) + ctx.Offset
-			addr -= arg.Type().UnitOffset()
-			return
+func (proc *Proc) detectIntersection(ranges[]pair) bool{
+	sort.SliceStable(ranges, func(i, j int) bool {
+		return ranges[i].addr < ranges[j].addr
+	    })
+	for i := 0; i < len(ranges)-1; i++ {
+		if ranges[i+1].addr < ranges[i].addr + ranges[i].len {
+			return true
 		}
-		i++
+	}
+	return false
+}
+
+func (proc *Proc) filterArguments(call *prog.Call, pointers map[prog.Arg]uint64, p *prog.Prog) bool{
+	var ranges[]pair
+	prog.ForeachArg(call, func(arg prog.Arg, ctx *prog.ArgCtx) {
+		switch a := arg.(type) {
+			case *prog.PointerArg:
+				if ctx.Base == nil {
+					return
+				}
+				value, ok := pointers[arg]
+				addr := p.Target.PhysicalAddr(ctx.Base) + ctx.Offset
+				addr -= arg.Type().UnitOffset()
+				if ok {
+					ranges = append(ranges, pair{addr, value})
+				}else if a.Res != nil {
+					ranges = append(ranges, pair{addr, a.Res.Size()})
+				}
+			case *prog.GroupArg:
+				addr := p.Target.PhysicalAddr(ctx.Base) + ctx.Offset
+				addr -= arg.Type().UnitOffset()
+				ranges = append(ranges, pair{addr, arg.Size()})
+		}
+
 	})
-	return addr
+	return proc.detectIntersection(ranges)
+}
+
+func (proc *Proc) getPointer(path []string, fields []prog.Field, call *prog.Call) prog.Arg{
+	elem := path[0]
+	var pointer prog.Arg 
+	for i, buf := range call.Args {
+		if elem != fields[i].Name {
+			continue
+		}
+		//TODO: Check on pointer for invalid cases 
+		pointer = buf
+		/*buf = InnerArg(buf)
+		if buf == nil {
+			dst.Val = 0 // target is an optional pointer
+			return
+		}*/
+		break
+		
+	}
+	return pointer
 }
 //TODO: move these functions to prog package
-func (proc *Proc) filterArguments(p *prog.Prog){
+func (proc *Proc) dFetchAnalysis(execOpts *ipc.ExecOpts, p *prog.Prog){
 	for _, call := range p.Calls {
-		var ranges []pair
-		last := len(call.Args)-1
-		for i := range call.Args{
-			arg := call.Args[last - i]
+		pointers := make(map[prog.Arg]uint64)
+		for _, arg := range call.Args{
 			typ, ok := arg.Type().(*prog.LenType)
 			if !ok {
 				continue
 			}
-			a := arg.(*prog.ConstArg)
-			var addr uint64
+			lenArg := arg.(*prog.ConstArg)
+			var pointerArg prog.Arg
 			if typ.Path[0] == prog.SyscallRef {
-				addr = proc.getPointer(a, typ.Path[1:], call.Meta.Args, call, p)
+				pointerArg = proc.getPointer(typ.Path[1:], call.Meta.Args, call)
 			} else {
-				addr = proc.getPointer(a, typ.Path, call.Meta.Args, call, p)
+				pointerArg = proc.getPointer(typ.Path, call.Meta.Args, call)
 			}
-			ranges = append(ranges,pair{addr, a.Val})
+			pointers[pointerArg] = lenArg.Val
+		}
+		dfDisable := proc.filterArguments(call, pointers, p)
+		if dfDisable {
+			execOpts.Flags |= (1 << 6)
 		}
 	}
 }
@@ -303,7 +341,7 @@ func (proc *Proc) execute(execOpts *ipc.ExecOpts, p *prog.Prog, flags ProgTypes,
 		return nil
 	}
 	calls, extra := proc.fuzzer.checkNewSignal(p, info)
-	proc.filterArguments(p)
+	proc.dFetchAnalysis(execOpts, p)
 	for _, callIndex := range calls {
 		proc.enqueueCallTriage(p, flags, callIndex, info.Calls[callIndex])
 	}
