@@ -74,6 +74,8 @@ const (
 	StatGenerate Stat = iota
 	StatFuzz
 	StatCandidate
+	StatEnableDF
+	StatDisableDF
 	StatTriage
 	StatMinimize
 	StatSmash
@@ -86,6 +88,8 @@ var statNames = [StatCount]string{
 	StatGenerate:  "exec gen",
 	StatFuzz:      "exec fuzz",
 	StatCandidate: "exec candidate",
+	StatEnableDF:  "df_enable programs",
+	StatDisableDF: "df_disable programs",
 	StatTriage:    "exec triage",
 	StatMinimize:  "exec minimize",
 	StatSmash:     "exec smash",

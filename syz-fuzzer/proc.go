@@ -73,7 +73,7 @@ func (proc *Proc) loop() {
 			case *WorkTriage:
 				proc.triageInput(item)
 			case *WorkCandidate:
-				proc.execute(proc.execOpts, item.p, item.flags, StatCandidate)
+				proc.execute(proc.execOpts, item.p, item.flags, StatCandidate, StatEnableDF, StatDisableDF)
 			case *WorkSmash:
 				proc.smashInput(item)
 			default:
@@ -88,13 +88,13 @@ func (proc *Proc) loop() {
 			// Generate a new prog.
 			p := proc.fuzzer.target.Generate(proc.rnd, prog.RecommendedCalls, ct)
 			log.Logf(1, "#%v: generated", proc.pid)
-			proc.execute(proc.execOpts, p, ProgNormal, StatGenerate)
+			proc.execute(proc.execOpts, p, ProgNormal, StatGenerate, StatEnableDF, StatDisableDF)
 		} else {
 			// Mutate an existing prog.
 			p := fuzzerSnapshot.chooseProgram(proc.rnd).Clone()
 			p.Mutate(proc.rnd, prog.RecommendedCalls, ct, fuzzerSnapshot.corpus)
 			log.Logf(1, "#%v: mutated", proc.pid)
-			proc.execute(proc.execOpts, p, ProgNormal, StatFuzz)
+			proc.execute(proc.execOpts, p, ProgNormal, StatFuzz, StatEnableDF, StatDisableDF)
 		}
 	}
 }
@@ -145,7 +145,7 @@ func (proc *Proc) triageInput(item *WorkTriage) {
 		item.p, item.call = prog.Minimize(item.p, item.call, false,
 			func(p1 *prog.Prog, call1 int) bool {
 				for i := 0; i < minimizeAttempts; i++ {
-					info := proc.execute(proc.execOptsNoCollide, p1, ProgNormal, StatMinimize)
+					info := proc.execute(proc.execOptsNoCollide, p1, ProgNormal, StatMinimize, StatEnableDF, StatDisableDF)
 					if !reexecutionSuccess(info, &item.info, call1) {
 						// The call was not executed or failed.
 						continue
@@ -212,7 +212,7 @@ func (proc *Proc) smashInput(item *WorkSmash) {
 		p := item.p.Clone()
 		p.Mutate(proc.rnd, prog.RecommendedCalls, proc.fuzzer.choiceTable, fuzzerSnapshot.corpus)
 		log.Logf(1, "#%v: smash mutated", proc.pid)
-		proc.execute(proc.execOpts, p, ProgNormal, StatSmash)
+		proc.execute(proc.execOpts, p, ProgNormal, StatSmash, StatEnableDF, StatDisableDF)
 	}
 }
 
@@ -233,7 +233,7 @@ func (proc *Proc) failCall(p *prog.Prog, call int) {
 func (proc *Proc) executeHintSeed(p *prog.Prog, call int) {
 	log.Logf(1, "#%v: collecting comparisons", proc.pid)
 	// First execute the original program to dump comparisons from KCOV.
-	info := proc.execute(proc.execOptsComps, p, ProgNormal, StatSeed)
+	info := proc.execute(proc.execOptsComps, p, ProgNormal, StatSeed, StatEnableDF, StatDisableDF)
 	if info == nil {
 		return
 	}
@@ -243,11 +243,11 @@ func (proc *Proc) executeHintSeed(p *prog.Prog, call int) {
 	// Execute each of such mutants to check if it gives new coverage.
 	p.MutateWithHints(call, info.Calls[call].Comps, func(p *prog.Prog) {
 		log.Logf(1, "#%v: executing comparison hint", proc.pid)
-		proc.execute(proc.execOpts, p, ProgNormal, StatHint)
+		proc.execute(proc.execOpts, p, ProgNormal, StatHint, StatEnableDF, StatDisableDF)
 	})
 }
 
-func (proc *Proc) execute(execOpts *ipc.ExecOpts, p *prog.Prog, flags ProgTypes, stat Stat) *ipc.ProgInfo {
+func (proc *Proc) execute(execOpts *ipc.ExecOpts, p *prog.Prog, flags ProgTypes, stat Stat, enableDF Stat, disableDF Stat) *ipc.ProgInfo {
 	info := proc.executeRaw(execOpts, p, stat)
 	if info == nil {
 		return nil
@@ -255,7 +255,11 @@ func (proc *Proc) execute(execOpts *ipc.ExecOpts, p *prog.Prog, flags ProgTypes,
 	calls, extra := proc.fuzzer.checkNewSignal(p, info)
 	dfDisable := prog.DFetchAnalysis(p)
 	if dfDisable {
+		atomic.AddUint64(&proc.fuzzer.stats[disableDF], 1)
 		execOpts.Flags |= (1 << 6)
+
+	} else {
+		atomic.AddUint64(&proc.fuzzer.stats[enableDF], 1)
 	}
 	for _, callIndex := range calls {
 		proc.enqueueCallTriage(p, flags, callIndex, info.Calls[callIndex])
