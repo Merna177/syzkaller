@@ -328,6 +328,13 @@ func detectIntersection(ranges[]pair) bool{
 	return false
 }
 
+func max(a, b uint64) uint64 {
+	if a > b {
+	    return a
+	}
+	return b
+    }
+
 func filterArguments(call *Call, pointers map[Arg]uint64, p *Prog) bool{
 	var ranges[]pair
 	ForeachArg(call, func(arg Arg, ctx *ArgCtx) {
@@ -342,12 +349,12 @@ func filterArguments(call *Call, pointers map[Arg]uint64, p *Prog) bool{
 				if ok {
 					ranges = append(ranges, pair{addr, value})
 				}else if a.Res != nil {
-					ranges = append(ranges, pair{addr, a.Res.Size()})
+					ranges = append(ranges, pair{addr, max(a.Res.Size(), 1)})
 				}
 			case *GroupArg:
 				addr := p.Target.PhysicalAddr(ctx.Base) + ctx.Offset
 				addr -= arg.Type().UnitOffset()
-				ranges = append(ranges, pair{addr, arg.Size()})
+				ranges = append(ranges, pair{addr, max(arg.Size(), 1)})
 		}
 
 	})
