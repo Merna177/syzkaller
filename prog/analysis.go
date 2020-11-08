@@ -354,7 +354,7 @@ func filterArguments(call *Call, pointers map[Arg]uint64, p *Prog) bool{
 	return detectIntersection(ranges)
 }
 
-func getPointer(path []string, fields []Field, call *Call) Arg{
+func getPointer(path []string, fields []Field, call *Call) Arg {
 	elem := path[0]
 	var pointer Arg 
 	for i, buf := range call.Args {
@@ -374,7 +374,7 @@ func getPointer(path []string, fields []Field, call *Call) Arg{
 	return pointer
 }
 
-func DFetchAnalysis(p *Prog) bool{
+func DFetchAnalysis(p *Prog) bool {
 	for _, call := range p.Calls {
 		pointers := make(map[Arg]uint64)
 		for _, arg := range call.Args{
@@ -393,7 +393,7 @@ func DFetchAnalysis(p *Prog) bool{
 		}
 		dfDisable := filterArguments(call, pointers, p)
 		if dfDisable {
-			return dfDisable
+			return true
 		}
 	}
 	return false
