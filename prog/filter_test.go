@@ -5,6 +5,8 @@ import (
 	"testing"
 )
 
+//mutate3(&(0x7f0000000000)=[0x1, 0x1], 0x2)
+
 func TestFilterArguments(t *testing.T) {
 	tests := [][2]string{
 		{
@@ -13,7 +15,7 @@ func TestFilterArguments(t *testing.T) {
 		},
 		{
 			`dfetch1(&(0x7f0000000000)={0x0, {0x0}})`,
-			"true",
+			"false",
 		},
 	}
 	target := initTargetTest(t, "test", "64")

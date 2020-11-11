@@ -335,7 +335,7 @@ func max(a, b uint64) uint64 {
 	return b
 }
 
-func filterArguments(call *Call, pointers map[Arg]uint64, p *Prog) bool {
+func filterArguments(call *Call, requiredArg map[Arg]uint64, p *Prog) bool {
 	var ranges []pair
 	ForeachArg(call, func(arg Arg, ctx *ArgCtx) {
 		switch a := arg.(type) {
@@ -343,7 +343,7 @@ func filterArguments(call *Call, pointers map[Arg]uint64, p *Prog) bool {
 			if ctx.Base == nil {
 				return
 			}
-			value, ok := pointers[arg]
+			value, ok := requiredArg[arg]
 			addr := p.Target.PhysicalAddr(ctx.Base) + ctx.Offset
 			addr -= arg.Type().UnitOffset()
 			if ok {
@@ -352,9 +352,12 @@ func filterArguments(call *Call, pointers map[Arg]uint64, p *Prog) bool {
 				ranges = append(ranges, pair{addr, max(a.Res.Size(), 1)})
 			}
 		case *GroupArg:
-			addr := p.Target.PhysicalAddr(ctx.Base) + ctx.Offset
-			addr -= arg.Type().UnitOffset()
-			ranges = append(ranges, pair{addr, max(arg.Size(), 1)})
+			value, ok := requiredArg[arg]
+			if ok {
+				addr := p.Target.PhysicalAddr(ctx.Base) + ctx.Offset
+				addr -= arg.Type().UnitOffset()
+				ranges = append(ranges, pair{addr, value})
+			}
 		}
 
 	})
@@ -383,8 +386,13 @@ func getPointer(path []string, fields []Field, call *Call) Arg {
 
 func DFetchAnalysis(p *Prog) bool {
 	for _, call := range p.Calls {
-		pointers := make(map[Arg]uint64)
+		requiredArg := make(map[Arg]uint64)
 		for _, arg := range call.Args {
+			_, ok := arg.(*GroupArg)
+			if ok {
+				requiredArg[arg] = max(arg.Size(), 1)
+				continue
+			}
 			typ, ok := arg.Type().(*LenType)
 			if !ok {
 				continue
@@ -396,9 +404,9 @@ func DFetchAnalysis(p *Prog) bool {
 			} else {
 				pointerArg = getPointer(typ.Path, call.Meta.Args, call)
 			}
-			pointers[pointerArg] = lenArg.Val
+			requiredArg[pointerArg] = lenArg.Val
 		}
-		dfDisable := filterArguments(call, pointers, p)
+		dfDisable := filterArguments(call, requiredArg, p)
 		if dfDisable {
 			return true
 		}
