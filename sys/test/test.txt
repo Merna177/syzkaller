@@ -736,6 +736,11 @@ hint_ints {
 	int2_12	int16:12
 }
 
+# Double Fetch tests.
+
+dfetch0(a0 ptr[in, string])
+dfetch1(a0 ptr[in, syz_struct0])
+
 # Mutation tests.
 
 mutate0()
