@@ -313,15 +313,15 @@ func decodeFallbackSignal(s uint32) (typ, id, aux int) {
 
 type pair struct {
 	addr uint64
-	len uint64
+	len  uint64
 }
 
-func detectIntersection(ranges[]pair) bool{
+func detectIntersection(ranges []pair) bool {
 	sort.SliceStable(ranges, func(i, j int) bool {
 		return ranges[i].addr < ranges[j].addr
-	    })
+	})
 	for i := 0; i < len(ranges)-1; i++ {
-		if ranges[i+1].addr < ranges[i].addr + ranges[i].len {
+		if ranges[i+1].addr < ranges[i].addr+ranges[i].len {
 			return true
 		}
 	}
@@ -330,31 +330,31 @@ func detectIntersection(ranges[]pair) bool{
 
 func max(a, b uint64) uint64 {
 	if a > b {
-	    return a
+		return a
 	}
 	return b
-    }
+}
 
-func filterArguments(call *Call, pointers map[Arg]uint64, p *Prog) bool{
-	var ranges[]pair
+func filterArguments(call *Call, pointers map[Arg]uint64, p *Prog) bool {
+	var ranges []pair
 	ForeachArg(call, func(arg Arg, ctx *ArgCtx) {
 		switch a := arg.(type) {
-			case *PointerArg:
-				if ctx.Base == nil {
-					return
-				}
-				value, ok := pointers[arg]
-				addr := p.Target.PhysicalAddr(ctx.Base) + ctx.Offset
-				addr -= arg.Type().UnitOffset()
-				if ok {
-					ranges = append(ranges, pair{addr, value})
-				}else if a.Res != nil {
-					ranges = append(ranges, pair{addr, max(a.Res.Size(), 1)})
-				}
-			case *GroupArg:
-				addr := p.Target.PhysicalAddr(ctx.Base) + ctx.Offset
-				addr -= arg.Type().UnitOffset()
-				ranges = append(ranges, pair{addr, max(arg.Size(), 1)})
+		case *PointerArg:
+			if ctx.Base == nil {
+				return
+			}
+			value, ok := pointers[arg]
+			addr := p.Target.PhysicalAddr(ctx.Base) + ctx.Offset
+			addr -= arg.Type().UnitOffset()
+			if ok {
+				ranges = append(ranges, pair{addr, value})
+			} else if a.Res != nil {
+				ranges = append(ranges, pair{addr, max(a.Res.Size(), 1)})
+			}
+		case *GroupArg:
+			addr := p.Target.PhysicalAddr(ctx.Base) + ctx.Offset
+			addr -= arg.Type().UnitOffset()
+			ranges = append(ranges, pair{addr, max(arg.Size(), 1)})
 		}
 
 	})
@@ -363,12 +363,12 @@ func filterArguments(call *Call, pointers map[Arg]uint64, p *Prog) bool{
 
 func getPointer(path []string, fields []Field, call *Call) Arg {
 	elem := path[0]
-	var pointer Arg 
+	var pointer Arg
 	for i, buf := range call.Args {
 		if elem != fields[i].Name {
 			continue
 		}
-		//TODO: Check on pointer for invalid cases 
+		//TODO: Check on pointer for invalid cases
 		pointer = buf
 		/*buf = InnerArg(buf)
 		if buf == nil {
@@ -376,7 +376,7 @@ func getPointer(path []string, fields []Field, call *Call) Arg {
 			return
 		}*/
 		break
-		
+
 	}
 	return pointer
 }
@@ -384,7 +384,7 @@ func getPointer(path []string, fields []Field, call *Call) Arg {
 func DFetchAnalysis(p *Prog) bool {
 	for _, call := range p.Calls {
 		pointers := make(map[Arg]uint64)
-		for _, arg := range call.Args{
+		for _, arg := range call.Args {
 			typ, ok := arg.Type().(*LenType)
 			if !ok {
 				continue

@@ -273,4 +273,3 @@ static void df_enable()
 	close(fd);
 	return;
 }
-

@@ -54,7 +54,7 @@ const (
 	FlagCollectComps                       // collect KCOV comparisons
 	FlagThreaded                           // use multiple threads to mitigate blocked syscalls
 	FlagCollide                            // collide syscalls to provoke data races
-	FlagDoubleFetch			       // Collect Double fetching bug 
+	FlagDoubleFetch                        // Collect Double fetching bug
 )
 
 type ExecOpts struct {
