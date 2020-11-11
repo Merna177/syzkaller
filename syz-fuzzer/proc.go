@@ -123,7 +123,7 @@ func (proc *Proc) triageInput(item *WorkTriage) {
 	// Compute input coverage and non-flaky signal for minimization.
 	notexecuted := 0
 	for i := 0; i < signalRuns; i++ {
-		info := proc.executeRaw(proc.execOptsCover, item.p, StatTriage, StatEnableDF, StatDisableDF)
+		info := proc.executeRaw(proc.execOptsCover, item.p, StatTriage)
 		if !reexecutionSuccess(info, &item.info, item.call) {
 			// The call was not executed or failed.
 			notexecuted++
@@ -223,7 +223,7 @@ func (proc *Proc) failCall(p *prog.Prog, call int) {
 		opts.Flags |= ipc.FlagInjectFault
 		opts.FaultCall = call
 		opts.FaultNth = nth
-		info := proc.executeRaw(&opts, p, StatSmash, StatEnableDF, StatDisableDF)
+		info := proc.executeRaw(&opts, p, StatSmash)
 		if info != nil && len(info.Calls) > call && info.Calls[call].Flags&ipc.CallFaultInjected == 0 {
 			break
 		}
@@ -248,7 +248,7 @@ func (proc *Proc) executeHintSeed(p *prog.Prog, call int) {
 }
 
 func (proc *Proc) execute(execOpts *ipc.ExecOpts, p *prog.Prog, flags ProgTypes, stat Stat) *ipc.ProgInfo {
-	info := proc.executeRaw(execOpts, p, stat, StatEnableDF, StatDisableDF)
+	info := proc.executeRaw(execOpts, p, stat)
 	if info == nil {
 		return nil
 	}
@@ -276,17 +276,17 @@ func (proc *Proc) enqueueCallTriage(p *prog.Prog, flags ProgTypes, callIndex int
 	})
 }
 
-func (proc *Proc) executeRaw(opts *ipc.ExecOpts, p *prog.Prog, stat Stat, enableDF Stat, disableDF Stat) *ipc.ProgInfo {
+func (proc *Proc) executeRaw(opts *ipc.ExecOpts, p *prog.Prog, stat Stat) *ipc.ProgInfo {
 	if opts.Flags&ipc.FlagDedupCover == 0 {
 		log.Fatalf("dedup cover is not enabled")
 	}
 	dfDisable := prog.DFetchAnalysis(p)
 	if dfDisable {
-		atomic.AddUint64(&proc.fuzzer.stats[disableDF], 1)
+		atomic.AddUint64(&proc.fuzzer.stats[StatEnableDF], 1)
 		opts.Flags |= (1 << 6)
 
 	} else {
-		atomic.AddUint64(&proc.fuzzer.stats[enableDF], 1)
+		atomic.AddUint64(&proc.fuzzer.stats[StatEnableDF], 1)
 	}
 	for _, call := range p.Calls {
 		if !proc.fuzzer.choiceTable.Enabled(call.Meta.ID) {
