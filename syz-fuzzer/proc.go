@@ -282,7 +282,7 @@ func (proc *Proc) executeRaw(opts *ipc.ExecOpts, p *prog.Prog, stat Stat) *ipc.P
 	}
 	dfDisable := prog.DFetchAnalysis(p)
 	if dfDisable {
-		atomic.AddUint64(&proc.fuzzer.stats[StatEnableDF], 1)
+		atomic.AddUint64(&proc.fuzzer.stats[StatDisableDF], 1)
 		opts.Flags |= (1 << 6)
 
 	} else {
