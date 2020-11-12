@@ -738,8 +738,17 @@ hint_ints {
 
 # Double Fetch tests.
 
+type iovec[DIR, T] {
+	addr	ptr[DIR, T]
+	len	len[addr, intptr]
+}
+type iovec_in iovec[in, array[int8]]
+
 dfetch0(a0 ptr[in, string])
 dfetch1(a0 ptr[in, syz_struct0])
+dfetch2(vec ptr[in, array[int32[0:1]]], vlen len[vec], vec1 ptr[in, array[int32[0:1]]], vlen1 len[vec1])
+dfetch3(payload0 ptr[in, array[int8]], paylen0 len[payload0], payload1 ptr[in, array[int8]], paylen1 len[payload1])
+dfetch4(fd fd, vec ptr[in, array[iovec_in]], vlen len[vec])
 
 # Mutation tests.
 
