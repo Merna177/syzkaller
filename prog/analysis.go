@@ -370,18 +370,14 @@ func filterArguments(call *Call, requiredArg map[Arg]uint64, p *Prog) bool {
 
 func getPointer(path []string, fields []Field, call *Call) Arg {
 	elem := path[0]
-	var pointer Arg
+	var pointer Arg 
 	for i, buf := range call.Args {
 		if elem != fields[i].Name {
 			continue
 		}
 		//TODO: Check on pointer for invalid cases
+		buf = InnerArg(buf)
 		pointer = buf
-		/*buf = InnerArg(buf)
-		if buf == nil {
-			dst.Val = 0 // target is an optional pointer
-			return
-		}*/
 		break
 
 	}
@@ -410,7 +406,10 @@ func DFetchAnalysis(p *Prog) bool {
 			} else {
 				pointerArg = getPointer(typ.Path, call.Meta.Args, call)
 			}
-			requiredArg[pointerArg] = lenArg.Val
+			// pointer is an optional pointer
+			if pointerArg != nil {
+				requiredArg[pointerArg] = lenArg.Val
+			}
 		}
 		dfDisable := filterArguments(call, requiredArg, p)
 		if dfDisable {
