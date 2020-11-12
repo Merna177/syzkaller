@@ -335,6 +335,8 @@ func max(a, b uint64) uint64 {
 	return b
 }
 
+// iterate over the arguments tree and collect the addresses range of pointersArg
+
 func filterArguments(call *Call, requiredArg map[Arg]uint64, p *Prog) bool {
 	var ranges []pair
 	ForeachArg(call, func(arg Arg, ctx *ArgCtx) {
@@ -364,6 +366,8 @@ func filterArguments(call *Call, requiredArg map[Arg]uint64, p *Prog) bool {
 	return detectIntersection(ranges)
 }
 
+//get the pointer associated to lenType
+
 func getPointer(path []string, fields []Field, call *Call) Arg {
 	elem := path[0]
 	var pointer Arg
@@ -383,6 +387,8 @@ func getPointer(path []string, fields []Field, call *Call) Arg {
 	}
 	return pointer
 }
+
+// to filter any program contain overlapped arguments
 
 func DFetchAnalysis(p *Prog) bool {
 	for _, call := range p.Calls {
