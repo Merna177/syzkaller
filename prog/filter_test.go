@@ -17,6 +17,15 @@ func TestFilterArguments(t *testing.T) {
 			`dfetch1(&(0x7f0000000000)={0x0, {0x0}})`,
 			"false",
 		},
+		{
+			`dfetch5(&(0x7f0000000000)="1122", 0x5, &(0x7f0000000000)="1100", 0x2)`,
+			"true",
+		},
+		{
+			`dfetch3(&(0x7f0000000180)={'syz'}, &(0x7f0000000040), 0x1d4)`,
+			"true",
+		},
+
 	}
 	target := initTargetTest(t, "test", "64")
 	for ti, test := range tests {
