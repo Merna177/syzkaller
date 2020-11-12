@@ -744,11 +744,18 @@ type iovec[DIR, T] {
 }
 type iovec_in iovec[in, array[int8]]
 
+key_desc {
+	prefix	stringnoz["syz"]
+	id	proc[' ', 4, int8]
+	z	const[0, int8]
+}
+
 dfetch0(a0 ptr[in, string])
 dfetch1(a0 ptr[in, syz_struct0])
 dfetch2(vec ptr[in, array[int32[0:1]]], vlen len[vec], vec1 ptr[in, array[int32[0:1]]], vlen1 len[vec1])
-dfetch3(payload0 ptr[in, array[int8]], paylen0 len[payload0], payload1 ptr[in, array[int8]], paylen1 len[payload1])
+dfetch3(desc ptr[in, key_desc], payload ptr[in, array[int8], opt], paylen len[payload])
 dfetch4(fd fd, vec ptr[in, array[iovec_in]], vlen len[vec])
+dfetch5(data ptr[in, array[int8]], size bytesize[data], data1 ptr[in, array[int8]], size1 bytesize[data1])
 
 # Mutation tests.
 
