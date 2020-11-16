@@ -48,6 +48,7 @@ type Fuzzer struct {
 type BugFrames struct {
 	memoryLeaks []string
 	dataRaces   []string
+	multiReads  []string
 }
 
 // RPCManagerView restricts interface between RPCServer and Manager.
@@ -99,6 +100,7 @@ func (serv *RPCServer) Connect(a *rpctype.ConnectArgs, r *rpctype.ConnectRes) er
 	serv.fuzzers[a.Name] = f
 	r.MemoryLeakFrames = bugFrames.memoryLeaks
 	r.DataRaceFrames = bugFrames.dataRaces
+	r.MultiReadFrames = bugFrames.multiReads
 	r.EnabledCalls = serv.configEnabledSyscalls
 	r.GitRevision = prog.GitRevision
 	r.TargetRevision = serv.target.Revision
