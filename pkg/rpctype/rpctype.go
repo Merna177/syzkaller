@@ -37,7 +37,6 @@ type ConnectRes struct {
 	CheckResult      *CheckArgs
 	MemoryLeakFrames []string
 	DataRaceFrames   []string
-	MultiReadFrames  []string
 }
 
 type CheckArgs struct {
