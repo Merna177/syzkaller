@@ -79,7 +79,7 @@ type Manager struct {
 	lastMinCorpus    int
 	memoryLeakFrames map[string]bool
 	dataRaceFrames   map[string]bool
-	multiReadFrames  map[string]bool
+	multiReadFrames  map[string]int
 	saturatedCalls   map[string]bool
 
 	needMoreRepros chan chan bool
@@ -176,7 +176,7 @@ func RunManager(cfg *mgrconfig.Config, target *prog.Target, sysTarget *targets.T
 		disabledHashes:        make(map[string]struct{}),
 		memoryLeakFrames:      make(map[string]bool),
 		dataRaceFrames:        make(map[string]bool),
-		multiReadFrames:       make(map[string]bool),
+		multiReadFrames:       make(map[string]int),
 		fresh:                 true,
 		vmStop:                make(chan bool),
 		hubReproQueue:         make(chan *Crash, 10),
@@ -672,7 +672,10 @@ func (mgr *Manager) saveCrash(crash *Crash) bool {
 	}
 	if crash.Type == report.MultiRead {
 		mgr.mu.Lock()
-		mgr.multiReadFrames[crash.Frame] = true
+		mgr.multiReadFrames[crash.Frame] += 1
+		if mgr.multiReadFrames[crash.Frame] == 2 {
+			mgr.cfg.Ignores = append(mgr.cfg.Ignores, crash.Frame)
+		}
 		mgr.mu.Unlock()
 	}
 	if crash.Suppressed {
@@ -1069,11 +1072,7 @@ func (mgr *Manager) fuzzerConnect() ([]rpctype.RPCInput, BugFrames) {
 	for frame := range mgr.dataRaceFrames {
 		dataRaceFrames = append(dataRaceFrames, frame)
 	}
-	multiReadFrames := make([]string, 0, len(mgr.multiReadFrames))
-	for frame := range mgr.multiReadFrames {
-		multiReadFrames = append(multiReadFrames, frame)
-	}
-	return corpus, BugFrames{memoryLeaks: memoryLeakFrames, dataRaces: dataRaceFrames, multiReads: multiReadFrames}
+	return corpus, BugFrames{memoryLeaks: memoryLeakFrames, dataRaces: dataRaceFrames}
 }
 
 func (mgr *Manager) machineChecked(a *rpctype.CheckArgs, enabledSyscalls map[*prog.Syscall]bool) {
