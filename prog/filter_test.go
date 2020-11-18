@@ -1,46 +1,40 @@
 package prog
 
 import (
-	"fmt"
 	"testing"
 )
 
-//mutate3(&(0x7f0000000000)=[0x1, 0x1], 0x2)
-
 func TestFilterArguments(t *testing.T) {
-	tests := [][2]string{
+	tests := []struct {
+		os     string
+		arch   string
+		prog   string
+		result bool
+	}{
 		{
-			`dfetch0(&(0x7f0000000000)='123')`,
-			"false",
+			"linux",
+			"amd64",
+			`add_key(&(0x7f0000005f40)='dns_resolver\x00', &(0x7f0000005f80)={'syz', 0x0, 0x7a}, &(0x7f0000005f20)="786015083dc3dbe94536578dc260891f45c4b3713a210099", 0x70, 0xffffffffffffffff)`,
+			true,
 		},
 		{
-			`dfetch1(&(0x7f0000000000)={0x0, {0x0}})`,
-			"false",
+			"linux",
+			"amd64",
+			`add_key(&(0x7f0000005f40)='dns_resolver\x00', &(0x7f0000005f50)={'syz', 0x0, 0x7a}, &(0x7f0000005f90)="786015083dc3dbe94536578dc260891f45c4b3713a210099", 0x70, 0xffffffffffffffff)`,
+			false,
 		},
-		{
-			`dfetch5(&(0x7f0000000000)="1122", 0x5, &(0x7f0000000000)="1100", 0x2)`,
-			"true",
-		},
-		{
-			`dfetch3(&(0x7f0000000180)={'syz'}, &(0x7f0000000040), 0x1d4)`,
-			"true",
-		},
-
 	}
-	target := initTargetTest(t, "test", "64")
 	for ti, test := range tests {
-		t.Run(fmt.Sprint(ti), func(t *testing.T) {
-			t.Parallel()
-			p, err := target.Deserialize([]byte(test[0]), Strict)
-			if err != nil {
-				t.Fatalf("failed to deserialize the program: %v", err)
-			}
-			ret := DFetchAnalysis(p)
-			if ret && test[1] == "true" || !ret && test[1] == "false" {
-				t.Logf("success on test %v", ti)
-			} else {
-				t.Fatalf("failed on test %v", ti)
-			}
-		})
+		target := initTargetTest(t, test.os, test.arch)
+		p, err := target.Deserialize([]byte(test.prog), Strict)
+		if err != nil {
+			t.Fatalf("failed to deserialize the program: %v", err)
+		}
+		ret := HasOverLappedArgs(p)
+		if ret == test.result {
+			t.Logf("success on test %v", ti)
+		} else {
+			t.Fatalf("failed on test %v", ti)
+		}
 	}
 }

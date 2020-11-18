@@ -280,8 +280,8 @@ func (proc *Proc) executeRaw(opts *ipc.ExecOpts, p *prog.Prog, stat Stat) *ipc.P
 	if opts.Flags&ipc.FlagDedupCover == 0 {
 		log.Fatalf("dedup cover is not enabled")
 	}
-	dfDisable := prog.DFetchAnalysis(p)
-	if dfDisable {
+	dFetchDisable := prog.HasOverLappedArgs(p)
+	if dFetchDisable {
 		atomic.AddUint64(&proc.fuzzer.stats[StatDisableDF], 1)
 		opts.Flags |= (1 << 6)
 

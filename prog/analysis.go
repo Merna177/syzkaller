@@ -340,79 +340,70 @@ func max(a, b uint64) uint64 {
 func filterArguments(call *Call, requiredArg map[Arg]uint64, p *Prog) bool {
 	var ranges []pair
 	ForeachArg(call, func(arg Arg, ctx *ArgCtx) {
-		switch a := arg.(type) {
-		case *PointerArg:
-			if ctx.Base == nil {
-				return
-			}
-			value, ok := requiredArg[arg]
-			addr := p.Target.PhysicalAddr(ctx.Base) + ctx.Offset
-			addr -= arg.Type().UnitOffset()
-			if ok {
-				ranges = append(ranges, pair{addr, value})
-			} else if a.Res != nil {
-				ranges = append(ranges, pair{addr, max(a.Res.Size(), 1)})
-			}
-		case *GroupArg:
-			value, ok := requiredArg[arg]
-			if ok {
-				addr := p.Target.PhysicalAddr(ctx.Base) + ctx.Offset
-				addr -= arg.Type().UnitOffset()
-				ranges = append(ranges, pair{addr, value})
-			}
+		a, ok := arg.(*PointerArg)
+		if !ok {
+			return
 		}
-
+		_, found := requiredArg[arg]
+		var len uint64 = 0
+		if found {
+			len = requiredArg[arg]
+		}
+		switch {
+		case a.VmaSize != 0:
+			ranges = append(ranges, pair{a.Address / p.Target.PageSize, max(len, a.VmaSize/p.Target.PageSize)})
+		case a.Res != nil:
+			ranges = append(ranges, pair{a.Address, max(len, a.Res.Size())})
+		}
 	})
 	return detectIntersection(ranges)
 }
 
 //get the pointer associated to lenType
 
-func getPointer(path []string, fields []Field, call *Call) Arg {
+func getPointer(path []string, fields []Field, call *Call) int {
 	elem := path[0]
-	var pointer Arg 
+	var index int
 	for i, buf := range call.Args {
 		if elem != fields[i].Name {
 			continue
 		}
 		//TODO: Check on pointer for invalid cases
 		buf = InnerArg(buf)
-		pointer = buf
+		if buf == nil {
+			return -1
+		}
+		index = i
 		break
 
 	}
-	return pointer
+	return index
 }
 
 // to filter any program contain overlapped arguments
 
-func DFetchAnalysis(p *Prog) bool {
+func HasOverLappedArgs(p *Prog) bool {
 	for _, call := range p.Calls {
 		requiredArg := make(map[Arg]uint64)
 		for _, arg := range call.Args {
-			_, ok := arg.(*GroupArg)
-			if ok {
-				requiredArg[arg] = max(arg.Size(), 1)
-				continue
-			}
 			typ, ok := arg.Type().(*LenType)
 			if !ok {
 				continue
 			}
 			lenArg := arg.(*ConstArg)
-			var pointerArg Arg
+			var pointerIndex int
 			if typ.Path[0] == SyscallRef {
-				pointerArg = getPointer(typ.Path[1:], call.Meta.Args, call)
+				pointerIndex = getPointer(typ.Path[1:], call.Meta.Args, call)
 			} else {
-				pointerArg = getPointer(typ.Path, call.Meta.Args, call)
+				pointerIndex = getPointer(typ.Path, call.Meta.Args, call)
 			}
 			// pointer is an optional pointer
-			if pointerArg != nil {
-				requiredArg[pointerArg] = lenArg.Val
+			if pointerIndex != -1 {
+				requiredArg[call.Args[pointerIndex]] = lenArg.Val
 			}
 		}
-		dfDisable := filterArguments(call, requiredArg, p)
-		if dfDisable {
+		dFetchDisable := filterArguments(call, requiredArg, p)
+		if dFetchDisable {
 			return true
 		}
 	}
