@@ -344,10 +344,10 @@ func filterArguments(call *Call, requiredArg map[Arg]uint64, p *Prog) bool {
 		if !ok {
 			return
 		}
-		_, found := requiredArg[arg]
+		_, found := requiredArg[InnerArg(arg)]
 		var len uint64 = 0
 		if found {
-			len = requiredArg[arg]
+			len = requiredArg[InnerArg(arg)]
 		}
 		switch {
 		case a.VmaSize != 0:
@@ -361,7 +361,7 @@ func filterArguments(call *Call, requiredArg map[Arg]uint64, p *Prog) bool {
 
 //get the pointer associated to lenType
 
-func getPointer(path []string, fields []Field, call *Call, p *Prog) Arg {
+func getPointer(pos Arg, path []string, fields []Field, call *Call, p *Prog, parentsMap map[Arg]Arg) Arg {
 	elem := path[0]
 	for i, buf := range call.Args {
 		if elem != fields[i].Name {
@@ -371,17 +371,41 @@ func getPointer(path []string, fields []Field, call *Call, p *Prog) Arg {
 		if typ := buf.Type(); typ == p.Target.any.ptrPtr || typ == p.Target.any.ptr64 || InnerArg(buf) == nil{
 			return nil
 		}
+		buf = InnerArg(buf)
+		return buf
+	}
+	if elem == ParentRef {
+		return parentsMap[pos]
+	}
+	for buf := parentsMap[InnerArg(pos)]; buf != nil; buf = parentsMap[buf] {
+		if elem != buf.Type().TemplateName() {
+			continue
+		}
 		return buf
 	}
 	return nil
+ 
 }
 
 // to filter any program contain overlapped arguments
 
 func HasOverLappedArgs(p *Prog) bool {
 	for _, call := range p.Calls {
+		parentsMap := make(map[Arg]Arg)
+		for _, arg := range call.Args {
+			ForeachSubArg(arg, func(arg Arg, _ *ArgCtx) {
+				if _, ok := arg.Type().(*StructType); ok {
+					for _, field := range arg.(*GroupArg).Inner {
+						parentsMap[InnerArg(field)] = arg
+					}
+				}
+			})
+		}
 		requiredArg := make(map[Arg]uint64)
 		for _, arg := range call.Args {
+			if arg = InnerArg(arg); arg == nil {
+				continue // Pointer to optional len field
+			}
 			typ, ok := arg.Type().(*LenType)
 			if !ok {
 				continue
@@ -389,9 +413,9 @@ func HasOverLappedArgs(p *Prog) bool {
 			lenArg := arg.(*ConstArg)
 			var pointer Arg
 			if typ.Path[0] == SyscallRef {
-				pointer = getPointer(typ.Path[1:], call.Meta.Args, call, p)
+				pointer = getPointer(nil, typ.Path[1:], call.Meta.Args, call, p, parentsMap)
 			} else {
-				pointer = getPointer(typ.Path, call.Meta.Args, call, p)
+				pointer = getPointer(lenArg, typ.Path, call.Meta.Args, call, p, parentsMap)
 			}
 			// pointer is an optional pointer
 			if pointer != nil {
