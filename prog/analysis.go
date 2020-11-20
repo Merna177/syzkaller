@@ -361,23 +361,19 @@ func filterArguments(call *Call, requiredArg map[Arg]uint64, p *Prog) bool {
 
 //get the pointer associated to lenType
 
-func getPointer(path []string, fields []Field, call *Call) int {
+func getPointer(path []string, fields []Field, call *Call, p *Prog) Arg {
 	elem := path[0]
-	var index int
 	for i, buf := range call.Args {
 		if elem != fields[i].Name {
 			continue
 		}
-		//TODO: Check on pointer for invalid cases
-		buf = InnerArg(buf)
-		if buf == nil {
-			return -1
+		//check for invalid cases
+		if typ := buf.Type(); typ == p.Target.any.ptrPtr || typ == p.Target.any.ptr64 || InnerArg(buf) == nil{
+			return nil
 		}
-		index = i
-		break
-
+		return buf
 	}
-	return index
+	return nil
 }
 
 // to filter any program contain overlapped arguments
@@ -391,15 +387,15 @@ func HasOverLappedArgs(p *Prog) bool {
 				continue
 			}
 			lenArg := arg.(*ConstArg)
-			var pointerIndex int
+			var pointer Arg
 			if typ.Path[0] == SyscallRef {
-				pointerIndex = getPointer(typ.Path[1:], call.Meta.Args, call)
+				pointer = getPointer(typ.Path[1:], call.Meta.Args, call, p)
 			} else {
-				pointerIndex = getPointer(typ.Path, call.Meta.Args, call)
+				pointer = getPointer(typ.Path, call.Meta.Args, call, p)
 			}
 			// pointer is an optional pointer
-			if pointerIndex != -1 {
-				requiredArg[call.Args[pointerIndex]] = lenArg.Val
+			if pointer != nil {
+				requiredArg[pointer] = lenArg.Val
 			}
 		}
 		dFetchDisable := filterArguments(call, requiredArg, p)
