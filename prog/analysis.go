@@ -361,9 +361,9 @@ func filterArguments(call *Call, requiredArg map[Arg]uint64, p *Prog) bool {
 
 //get the pointer associated to lenType
 
-func getPointer(pos Arg, path []string, fields []Field, call *Call, p *Prog, parentsMap map[Arg]Arg) Arg {
+func getPointer(pos Arg, path []string, args []Arg, fields []Field, p *Prog, parentsMap map[Arg]Arg) Arg {
 	elem := path[0]
-	for i, buf := range call.Args {
+	for i, buf := range args {
 		if elem != fields[i].Name {
 			continue
 		}
@@ -387,6 +387,34 @@ func getPointer(pos Arg, path []string, fields []Field, call *Call, p *Prog, par
  
 }
 
+// check for any LenType argument to get its associated pointer
+
+func checkLenType(args []Arg, fields []Field, parentsMap map[Arg]Arg,
+	syscallArgs []Arg, syscallFields []Field, p *Prog) map[Arg]uint64{
+	requiredArg := make(map[Arg]uint64)
+	for _, arg := range args {
+		if arg = InnerArg(arg); arg == nil {
+			continue
+		}
+		typ, ok := arg.Type().(*LenType)
+		if !ok {
+			continue
+		}
+		lenArg := arg.(*ConstArg)
+		var pointer Arg
+		if typ.Path[0] == SyscallRef {
+			pointer = getPointer(nil, typ.Path[1:], syscallArgs, syscallFields, p, parentsMap)
+		} else {
+			pointer = getPointer(lenArg, typ.Path, args, fields, p, parentsMap)
+		}
+		// pointer is an optional pointer
+		if pointer != nil {
+			requiredArg[pointer] = lenArg.Val
+		}
+	}
+	return requiredArg
+}
+
 // to filter any program contain overlapped arguments
 
 func HasOverLappedArgs(p *Prog) bool {
@@ -401,28 +429,19 @@ func HasOverLappedArgs(p *Prog) bool {
 				}
 			})
 		}
-		requiredArg := make(map[Arg]uint64)
+
+		pointerSize := checkLenType(call.Args, call.Meta.Args, parentsMap, call.Args, call.Meta.Args, p)
 		for _, arg := range call.Args {
-			if arg = InnerArg(arg); arg == nil {
-				continue // Pointer to optional len field
-			}
-			typ, ok := arg.Type().(*LenType)
-			if !ok {
-				continue
-			}
-			lenArg := arg.(*ConstArg)
-			var pointer Arg
-			if typ.Path[0] == SyscallRef {
-				pointer = getPointer(nil, typ.Path[1:], call.Meta.Args, call, p, parentsMap)
-			} else {
-				pointer = getPointer(lenArg, typ.Path, call.Meta.Args, call, p, parentsMap)
-			}
-			// pointer is an optional pointer
-			if pointer != nil {
-				requiredArg[pointer] = lenArg.Val
-			}
+			ForeachSubArg(arg, func(arg Arg, _ *ArgCtx) {
+				if typ, ok := arg.Type().(*StructType); ok {
+					mp := checkLenType(arg.(*GroupArg).Inner, typ.Fields, parentsMap, call.Args, call.Meta.Args, p)
+					for key, value := range mp {
+						pointerSize[key] = value
+					}
+				}
+			})
 		}
-		dFetchDisable := filterArguments(call, requiredArg, p)
+		dFetchDisable := filterArguments(call, pointerSize, p)
 		if dFetchDisable {
 			return true
 		}

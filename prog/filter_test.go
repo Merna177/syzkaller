@@ -24,6 +24,12 @@ func TestFilterArguments(t *testing.T) {
 			false,
 		},
 		{
+			"linux",
+			"amd64",
+			`seccomp$SECCOMP_SET_MODE_FILTER_LISTENER(0x1, 0x0,&(0x7f0000000040)={0x20000000000002c8, &(0x7f0000000000)=[{0x0,0x0,0x0,0x0}, {0x0,0x0,0x0,0x0}]})`,
+			true,
+		},
+		{
 			"test",
 			"64",
 			"dfetch0(&(0x7f0000000000)='123')",
@@ -47,7 +53,6 @@ func TestFilterArguments(t *testing.T) {
 			t.Fatalf("failed to deserialize the program: %v", err)
 		}
 		ret := HasOverLappedArgs(p)
-		Gooo(p, t)
 		if ret == test.result {
 			t.Logf("success on test %v", ti)
 		} else {
