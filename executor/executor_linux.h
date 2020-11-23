@@ -50,8 +50,8 @@ typedef char kcov_remote_arg64_size[sizeof(kcov_remote_arg64) == 24 ? 1 : -1];
 #define KCOV_SUBSYSTEM_MASK (0xffull << 56)
 #define KCOV_INSTANCE_MASK (0xffffffffull)
 
-#define DF_ENABLE _IO('c', 254)
-#define DF_DISABLE _IO('c', 255)
+#define DFETCH_ENABLE _IO('c', 254)
+#define DFETCH_DISABLE _IO('c', 255)
 
 static bool is_gvisor;
 
@@ -263,12 +263,12 @@ static void setup_machine()
 		printf("write to /sys/kernel/debug/x86/nmi_longest_ns failed: %s\n", strerror(errno));
 }
 
-static void df_enable()
+static void dFetch_enable()
 {
 	int fd = open("/sys/kernel/debug/df_detection", O_RDWR);
 	if (fd == -1)
 		fail("open of /sys/kernel/debug/df_detection failed");
-	if (ioctl(fd, DF_ENABLE))
+	if (ioctl(fd, DFETCH_ENABLE))
 		exitf("df enable failed");
 	close(fd);
 	return;
