@@ -345,7 +345,7 @@ func filterArguments(call *Call, requiredArg map[Arg]uint64, p *Prog) bool {
 			return
 		}
 		_, found := requiredArg[InnerArg(arg)]
-		var len uint64 = 0
+		var len uint64 = 1
 		if found {
 			len = requiredArg[InnerArg(arg)]
 		}
