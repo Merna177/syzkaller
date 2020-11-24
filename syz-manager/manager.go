@@ -674,9 +674,8 @@ func (mgr *Manager) saveCrash(crash *Crash) bool {
 		mgr.mu.Lock()
 		if mgr.multiReadFrames[crash.Title] {
 			mgr.cfg.Ignores = append(mgr.cfg.Ignores, crash.Title)
-		}else {
-			mgr.multiReadFrames[crash.Title] = true
 		}
+		mgr.multiReadFrames[crash.Title] = true
 		mgr.mu.Unlock()
 	}
 	if crash.Suppressed {
