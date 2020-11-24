@@ -1136,8 +1136,8 @@ var linuxOopses = append([]*oops{
 				noStackTrace: true,
 			},
 			{
-				title:  compile("BUG: multi-read"),
-				fmt:    "BUG: multi-read in %[1]v",
+				title: compile("BUG: multi-read"),
+				fmt:   "BUG: multi-read in %[1]v",
 				stack: &stackFmt{
 					parts: []*regexp.Regexp{
 						compile("First Address Range Stack:"),

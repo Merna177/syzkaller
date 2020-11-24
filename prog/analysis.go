@@ -368,7 +368,7 @@ func getPointer(pos Arg, path []string, args []Arg, fields []Field, p *Prog, par
 			continue
 		}
 		//check for invalid cases
-		if typ := buf.Type(); typ == p.Target.any.ptrPtr || typ == p.Target.any.ptr64 || InnerArg(buf) == nil{
+		if typ := buf.Type(); typ == p.Target.any.ptrPtr || typ == p.Target.any.ptr64 || InnerArg(buf) == nil {
 			return nil
 		}
 		buf = InnerArg(buf)
@@ -384,13 +384,13 @@ func getPointer(pos Arg, path []string, args []Arg, fields []Field, p *Prog, par
 		return buf
 	}
 	return nil
- 
+
 }
 
 // check for any LenType argument to get its associated pointer
 
 func checkLenType(args []Arg, fields []Field, parentsMap map[Arg]Arg,
-	syscallArgs []Arg, syscallFields []Field, p *Prog) map[Arg]uint64{
+	syscallArgs []Arg, syscallFields []Field, p *Prog) map[Arg]uint64 {
 	requiredArg := make(map[Arg]uint64)
 	for _, arg := range args {
 		if arg = InnerArg(arg); arg == nil {

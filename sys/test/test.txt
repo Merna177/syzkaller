@@ -738,17 +738,7 @@ hint_ints {
 
 # Double Fetch tests.
 
-sock_fprog {
-	len	len[filter, int16]
-	filter	ptr[in, array[sock_filter]]
-}
-
-sock_filter {
-	a	stringnoz["syz"]
-}
-
 dfetch0(a0 ptr[in, string])
-dfetch1(arg ptr[in, sock_fprog])
 
 # Mutation tests.
 

@@ -230,7 +230,7 @@ func checkWifiEmulation() string {
 }
 
 func checkDoubleFetch() string {
-	if err := osutil.IsAccessible("/sys/kernel/debug/df_detection"); err != nil {
+	if err := osutil.IsAccessible("/sys/kernel/debug/dfetch_detection"); err != nil {
 		return err.Error()
 	}
 	return ""

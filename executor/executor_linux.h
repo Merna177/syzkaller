@@ -265,9 +265,9 @@ static void setup_machine()
 
 static void dFetch_enable()
 {
-	int fd = open("/sys/kernel/debug/df_detection", O_RDWR);
+	int fd = open("/sys/kernel/debug/dfetch_detection", O_RDWR);
 	if (fd == -1)
-		fail("open of /sys/kernel/debug/df_detection failed");
+		fail("open of /sys/kernel/debug/dfetch_detection failed");
 	if (ioctl(fd, DFETCH_ENABLE))
 		exitf("df enable failed");
 	close(fd);

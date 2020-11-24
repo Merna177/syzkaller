@@ -35,12 +35,6 @@ func TestFilterArguments(t *testing.T) {
 			"dfetch0(&(0x7f0000000000)='123')",
 			false,
 		},
-		{
-			"test",
-			"64",
-			`dfetch1(&(0x7f0000000040)={0x20000000000002c8, &(0x7f0000000000)=[{'syz'}]})`,
-			true,
-		},
 	}
 	t.Parallel()
 	for ti, test := range tests {

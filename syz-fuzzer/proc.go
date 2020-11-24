@@ -282,9 +282,9 @@ func (proc *Proc) executeRaw(opts *ipc.ExecOpts, p *prog.Prog, stat Stat) *ipc.P
 	}
 	dFetchDisable := prog.HasOverLappedArgs(p)
 	if dFetchDisable {
-		atomic.AddUint64(&proc.fuzzer.stats[StatDisableDF], 1)
+		atomic.AddUint64(&proc.fuzzer.stats[StatDisableDFETCH], 1)
 	} else {
-		atomic.AddUint64(&proc.fuzzer.stats[StatEnableDF], 1)
+		atomic.AddUint64(&proc.fuzzer.stats[StatEnableDFETCH], 1)
 		opts.Flags |= (1 << 6)
 	}
 	for _, call := range p.Calls {
