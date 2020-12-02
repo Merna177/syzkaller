@@ -12,6 +12,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"sync"
 
 	"github.com/google/syzkaller/pkg/osutil"
 	"github.com/google/syzkaller/pkg/symbolizer"
@@ -28,8 +29,11 @@ type linux struct {
 	questionableFrame     *regexp.Regexp
 	guiltyFileIgnores     []*regexp.Regexp
 	reportStartIgnores    []*regexp.Regexp
+	multiReadIgnores      []*regexp.Regexp
 	infoMessagesWithStack [][]byte
 	eoi                   []byte
+	multiReadMutex        sync.Mutex
+
 }
 
 func ctorLinux(cfg *config) (Reporter, []string, error) {
@@ -125,8 +129,17 @@ func ctorLinux(cfg *config) (Reporter, []string, error) {
 
 const contextConsole = "console"
 
+func (ctx *linux) updateIgnores(title string) {
+	ctx.multiReadMutex.Lock()
+	ctx.multiReadIgnores = append(ctx.multiReadIgnores, regexp.MustCompile(title))
+	ctx.multiReadMutex.Unlock()
+}
+
 func (ctx *linux) ContainsCrash(output []byte) bool {
-	return containsCrash(output, linuxOopses, ctx.ignores)
+	ctx.multiReadMutex.Lock()
+	ret := containsCrash(output, linuxOopses, ctx.multiReadIgnores)
+	ctx.multiReadMutex.Unlock()
+	return containsCrash(output, linuxOopses, ctx.ignores) && ret
 }
 
 func (ctx *linux) Parse(output []byte) *Report {
@@ -181,6 +194,9 @@ func (ctx *linux) Parse(output []byte) *Report {
 			if useQuestionableFrames {
 				continue
 			}
+		}
+		if strings.HasPrefix(rep.Title, "BUG: multi-read") {
+			ctx.updateIgnores(rep.Title)
 		}
 		return rep
 	}
@@ -522,7 +538,7 @@ func (ctx *linux) isCorrupted(title string, report []byte, format oopsFormat) (b
 	}
 	// Check if the report contains stack trace.
 	if !format.noStackTrace && !bytes.Contains(report, []byte("Call Trace")) &&
-		!bytes.Contains(report, []byte("backtrace")) {
+		!bytes.Contains(report, []byte("backtrace")) && !bytes.Contains(report, []byte("First Stack Trace")) {
 		return true, "no stack trace in report"
 	}
 	if format.noStackTrace {
@@ -727,6 +743,7 @@ var linuxCorruptedTitles = []*regexp.Regexp{
 
 var linuxStackKeywords = []*regexp.Regexp{
 	regexp.MustCompile(`Call Trace`),
+	regexp.MustCompile(`First Stack Trace`),
 	regexp.MustCompile(`Allocated:`),
 	regexp.MustCompile(`Allocated by task [0-9]+:`),
 	regexp.MustCompile(`Freed:`),
@@ -1134,6 +1151,18 @@ var linuxOopses = append([]*oops{
 					},
 				},
 				noStackTrace: true,
+			},
+			{
+				title: compile("BUG: multi-read"),
+				report:compile("BUG: multi-read"),
+				fmt:   "BUG: multi-read in %[1]v",
+				stack: &stackFmt{
+					parts: []*regexp.Regexp{
+						compile("First Stack Trace:"),
+						parseStackTrace,
+					},
+					skip: []string{"dfetch_save_stack", "add_address", "strncpy_from_user", "copy_from_user", "copyin", "get_user", "memdup_user"},
+				},
 			},
 			{
 				title:     compile(`BUG:[[:space:]]*(?:\n|$)`),
