@@ -12,6 +12,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"sync"
 
 	"github.com/google/syzkaller/pkg/osutil"
 	"github.com/google/syzkaller/pkg/symbolizer"
@@ -28,8 +29,11 @@ type linux struct {
 	questionableFrame     *regexp.Regexp
 	guiltyFileIgnores     []*regexp.Regexp
 	reportStartIgnores    []*regexp.Regexp
+	multiReadIgnores      []*regexp.Regexp
 	infoMessagesWithStack [][]byte
 	eoi                   []byte
+	multiReadMutex        sync.Mutex
+
 }
 
 func ctorLinux(cfg *config) (Reporter, []string, error) {
@@ -125,8 +129,17 @@ func ctorLinux(cfg *config) (Reporter, []string, error) {
 
 const contextConsole = "console"
 
+func (ctx *linux) updateIgnores(title string) {
+	ctx.multiReadMutex.Lock()
+	ctx.multiReadIgnores = append(ctx.multiReadIgnores, regexp.MustCompile(title))
+	ctx.multiReadMutex.Unlock()
+}
+
 func (ctx *linux) ContainsCrash(output []byte) bool {
-	return containsCrash(output, linuxOopses, ctx.ignores)
+	ctx.multiReadMutex.Lock()
+	ret := containsCrash(output, linuxOopses, ctx.multiReadIgnores)
+	ctx.multiReadMutex.Unlock()
+	return containsCrash(output, linuxOopses, ctx.ignores) && ret
 }
 
 func (ctx *linux) Parse(output []byte) *Report {
@@ -181,6 +194,9 @@ func (ctx *linux) Parse(output []byte) *Report {
 			if useQuestionableFrames {
 				continue
 			}
+		}
+		if strings.HasPrefix(rep.Title, "BUG: multi-read") {
+			ctx.updateIgnores(rep.Title)
 		}
 		return rep
 	}
