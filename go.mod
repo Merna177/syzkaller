@@ -5,15 +5,12 @@ go 1.14
 require (
 	cloud.google.com/go/pubsub v1.7.0
 	cloud.google.com/go/storage v1.10.0
-	github.com/BurntSushi/toml v0.3.1 // indirect
 	github.com/Djarvur/go-err113 v0.1.0 // indirect
 	github.com/coreos/go-etcd v2.0.0+incompatible // indirect
 	github.com/cpuguy83/go-md2man v1.0.10 // indirect
 	github.com/dvyukov/go-fuzz v0.0.0-20200318091601-be3528f3a813
 	github.com/go-lintpack/lintpack v0.5.2 // indirect
 	github.com/gogo/protobuf v1.3.1 // indirect
-	github.com/golang/groupcache v0.0.0-20200121045136-8c9f03a8e57e // indirect
-	github.com/golang/protobuf v1.4.2 // indirect
 	github.com/golangci/golangci-lint v1.31.0
 	github.com/golangci/misspell v0.3.5 // indirect
 	github.com/golangci/revgrep v0.0.0-20180812185044-276a5c0a1039 // indirect

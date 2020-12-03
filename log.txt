@@ -1,0 +1,115 @@
+2020/12/02 17:16:46 loading corpus...
+2020/12/02 17:16:51 serving http on http://127.0.0.1:56741
+2020/12/02 17:16:51 serving rpc on tcp://[::]:35175
+2020/12/02 17:16:51 booting test machines...
+2020/12/02 17:16:51 wait for the connection from test machine...
+2020/12/02 17:17:02 machine check:
+2020/12/02 17:17:02 syscalls                : 1916/3813
+2020/12/02 17:17:02 code coverage           : enabled
+2020/12/02 17:17:02 comparison tracing      : CONFIG_KCOV_ENABLE_COMPARISONS is not enabled
+2020/12/02 17:17:02 extra coverage          : enabled
+2020/12/02 17:17:02 setuid sandbox          : enabled
+2020/12/02 17:17:02 namespace sandbox       : /proc/self/ns/user does not exist
+2020/12/02 17:17:02 Android sandbox         : enabled
+2020/12/02 17:17:02 fault injection         : CONFIG_FAULT_INJECTION is not enabled
+2020/12/02 17:17:02 leak checking           : CONFIG_DEBUG_KMEMLEAK is not enabled
+2020/12/02 17:17:02 net packet injection    : /dev/net/tun does not exist
+2020/12/02 17:17:02 net device setup        : enabled
+2020/12/02 17:17:02 concurrency sanitizer   : /sys/kernel/debug/kcsan does not exist
+2020/12/02 17:17:02 devlink PCI setup       : PCI device 0000:00:10.0 is not available
+2020/12/02 17:17:02 USB emulation           : /dev/raw-gadget does not exist
+2020/12/02 17:17:02 hci packet injection    : /dev/vhci does not exist
+2020/12/02 17:17:02 wifi device emulation   : /sys/class/mac80211_hwsim/ does not exist
+2020/12/02 17:17:02 double fetch detection  : enabled
+2020/12/02 17:17:09 corpus                  : 9653 (deleted 0 broken)
+2020/12/02 17:17:10 seeds                   : 159/672
+2020/12/02 17:17:11 VMs 1, executed 2, corpus cover 0, corpus signal 0, max signal 0, crashes 0, repro 0
+2020/12/02 17:17:21 VMs 2, executed 113, corpus cover 9226, corpus signal 11126, max signal 11126, crashes 0, repro 0
+2020/12/02 17:17:23 vm-0: crash: BUG: multi-read in do_ipv6_getsockopt
+2020/12/02 17:17:25 vm-1: crash: BUG: multi-read in do_tcp_getsockopt
+2020/12/02 17:17:31 VMs 1, executed 115, corpus cover 9226, corpus signal 11126, max signal 11126, crashes 2, repro 0
+2020/12/02 17:17:35 vm-2: crash: BUG: multi-read in perf_copy_attr
+2020/12/02 17:17:41 VMs 3, executed 132, corpus cover 9286, corpus signal 11192, max signal 11126, crashes 3, repro 0
+2020/12/02 17:17:46 vm-3: crash: BUG: multi-read in copy_mount_options
+2020/12/02 17:17:51 VMs 3, executed 297, corpus cover 17492, corpus signal 19967, max signal 15616, crashes 4, repro 0
+2020/12/02 17:17:54 vm-1: crash: BUG: multi-read in perf_copy_attr
+2020/12/02 17:17:54 vm-0: crash: BUG: multi-read in perf_copy_attr
+2020/12/02 17:18:01 VMs 2, executed 373, corpus cover 18089, corpus signal 20302, max signal 20879, crashes 6, repro 0
+2020/12/02 17:18:01 vm-2: crash: BUG: multi-read in dev_ethtool
+2020/12/02 17:18:11 VMs 3, executed 466, corpus cover 20428, corpus signal 23460, max signal 22538, crashes 7, repro 0
+2020/12/02 17:18:11 vm-3: crash: BUG: multi-read in perf_copy_attr
+2020/12/02 17:18:18 vm-1: crash: BUG: multi-read in perf_copy_attr
+2020/12/02 17:18:19 vm-0: crash: BUG: multi-read in perf_copy_attr
+2020/12/02 17:18:21 VMs 1, executed 468, corpus cover 20428, corpus signal 23460, max signal 22538, crashes 10, repro 0
+2020/12/02 17:18:27 vm-2: crash: BUG: multi-read in perf_copy_attr
+2020/12/02 17:18:31 VMs 3, executed 512, corpus cover 21359, corpus signal 24602, max signal 23552, crashes 11, repro 0
+2020/12/02 17:18:36 vm-3: crash: BUG: multi-read in sock_setsockopt
+2020/12/02 17:18:41 VMs 3, executed 585, corpus cover 22322, corpus signal 25833, max signal 24770, crashes 12, repro 0
+2020/12/02 17:18:43 vm-0: crash: BUG: multi-read in do_ipv6_setsockopt
+2020/12/02 17:18:47 vm-1: crash: BUG: multi-read in perf_copy_attr
+2020/12/02 17:18:51 VMs 2, executed 639, corpus cover 22685, corpus signal 26293, max signal 26526, crashes 14, repro 0
+2020/12/02 17:18:51 vm-2: crash: BUG: multi-read in perf_copy_attr
+2020/12/02 17:19:01 VMs 3, executed 678, corpus cover 23844, corpus signal 28083, max signal 26526, crashes 15, repro 0
+2020/12/02 17:19:08 vm-0: crash: kernel BUG at kernel/irq_work.c:LINE!
+2020/12/02 17:19:11 VMs 2, executed 834, corpus cover 27820, corpus signal 33599, max signal 32067, crashes 15, repro 0
+2020/12/02 17:19:12 vm-3: crash: BUG: multi-read in perf_copy_attr
+2020/12/02 17:19:12 vm-1: crash: BUG: multi-read in perf_copy_attr
+2020/12/02 17:19:21 VMs 1, executed 970, corpus cover 29816, corpus signal 36164, max signal 34352, crashes 18, repro 0
+2020/12/02 17:19:31 VMs 4, executed 1062, corpus cover 30120, corpus signal 36632, max signal 35431, crashes 18, repro 0
+2020/12/02 17:19:31 vm-2: crash: BUG: multi-read in sched_copy_attr
+2020/12/02 17:19:37 vm-0: crash: BUG: multi-read in perf_copy_attr
+2020/12/02 17:19:37 vm-3: crash: BUG: multi-read in sched_copy_attr
+2020/12/02 17:19:38 vm-1: crash: BUG: multi-read in strndup_user
+2020/12/02 17:19:41 VMs 0, executed 1062, corpus cover 30120, corpus signal 36632, max signal 35431, crashes 22, repro 0
+2020/12/02 17:19:51 VMs 4, executed 1098, corpus cover 30891, corpus signal 37697, max signal 35536, crashes 22, repro 0
+2020/12/02 17:19:55 vm-2: crash: BUG: multi-read in perf_copy_attr
+2020/12/02 17:20:01 vm-0: crash: BUG: multi-read in tcp_setsockopt
+2020/12/02 17:20:01 VMs 2, executed 1209, corpus cover 31750, corpus signal 38838, max signal 36781, crashes 23, repro 0
+2020/12/02 17:20:01 vm-3: crash: BUG: multi-read in perf_copy_attr
+2020/12/02 17:20:02 vm-1: crash: BUG: multi-read in __x64_sys_io_submit
+2020/12/02 17:20:11 VMs 1, executed 1227, corpus cover 31789, corpus signal 38891, max signal 36871, crashes 26, repro 0
+2020/12/02 17:20:21 VMs 4, executed 1325, corpus cover 32322, corpus signal 39654, max signal 37415, crashes 26, repro 0
+2020/12/02 17:20:25 vm-0: crash: BUG: multi-read in do_tcp_getsockopt
+2020/12/02 17:20:26 vm-3: crash: BUG: multi-read in sg_write
+2020/12/02 17:20:27 vm-1: crash: BUG: multi-read in __copy_msghdr_from_user
+2020/12/02 17:20:31 VMs 1, executed 1495, corpus cover 33475, corpus signal 41212, max signal 38730, crashes 29, repro 0
+2020/12/02 17:20:37 vm-2: crash: BUG: multi-read in do_ipv6_setsockopt
+2020/12/02 17:20:41 VMs 3, executed 1536, corpus cover 35206, corpus signal 43487, max signal 41218, crashes 30, repro 0
+2020/12/02 17:20:49 vm-0: crash: BUG: multi-read in strndup_user
+2020/12/02 17:20:51 VMs 3, executed 1708, corpus cover 36314, corpus signal 44698, max signal 42397, crashes 31, repro 0
+2020/12/02 17:20:51 vm-3: crash: BUG: multi-read in __copy_msghdr_from_user
+2020/12/02 17:21:01 VMs 3, executed 1827, corpus cover 36793, corpus signal 45717, max signal 43297, crashes 32, repro 0
+2020/12/02 17:21:01 vm-2: crash: BUG: multi-read in key_get_type_from_user
+2020/12/02 17:21:02 vm-1: crash: BUG: multi-read in __x64_sys_io_submit
+2020/12/02 17:21:11 VMs 2, executed 1913, corpus cover 37173, corpus signal 46135, max signal 43674, crashes 34, repro 0
+2020/12/02 17:21:13 vm-0: crash: BUG: multi-read in perf_copy_attr
+2020/12/02 17:21:16 vm-3: crash: BUG: multi-read in sock_setsockopt
+2020/12/02 17:21:21 VMs 2, executed 1982, corpus cover 37522, corpus signal 46665, max signal 44267, crashes 36, repro 0
+2020/12/02 17:21:26 vm-1: crash: BUG: multi-read in dev_ethtool
+2020/12/02 17:21:28 vm-2: crash: BUG: multi-read in sock_setsockopt
+2020/12/02 17:21:31 VMs 2, executed 2027, corpus cover 37585, corpus signal 46783, max signal 44475, crashes 38, repro 0
+2020/12/02 17:21:37 vm-0: crash: BUG: multi-read in strndup_user
+2020/12/02 17:21:41 VMs 3, executed 2031, corpus cover 37648, corpus signal 46873, max signal 44475, crashes 39, repro 0
+2020/12/02 17:21:41 vm-3: crash: BUG: multi-read in perf_copy_attr
+2020/12/02 17:21:51 VMs 3, executed 2047, corpus cover 37650, corpus signal 46880, max signal 44503, crashes 40, repro 0
+2020/12/02 17:21:52 vm-1: crash: BUG: multi-read in do_ip_getsockopt
+2020/12/02 17:21:53 vm-2: crash: BUG: multi-read in do_ipv6_setsockopt
+2020/12/02 17:22:01 VMs 2, executed 2224, corpus cover 38814, corpus signal 48629, max signal 46193, crashes 42, repro 0
+2020/12/02 17:22:05 vm-0: crash: BUG: multi-read in perf_copy_attr
+2020/12/02 17:22:06 vm-3: crash: BUG: multi-read in do_ipv6_setsockopt
+2020/12/02 17:22:11 VMs 2, executed 2246, corpus cover 39046, corpus signal 48941, max signal 46330, crashes 44, repro 0
+2020/12/02 17:22:16 vm-1: crash: BUG: multi-read in rw_copy_check_uvector
+2020/12/02 17:22:21 VMs 3, executed 2361, corpus cover 39888, corpus signal 50112, max signal 47464, crashes 45, repro 0
+2020/12/02 17:22:29 vm-2: crash: BUG: multi-read in sg_write
+2020/12/02 17:22:29 vm-0: crash: BUG: multi-read in do_ip_getsockopt
+2020/12/02 17:22:31 VMs 2, executed 2363, corpus cover 39942, corpus signal 50190, max signal 47464, crashes 47, repro 0
+2020/12/02 17:22:31 vm-3: crash: BUG: multi-read in perf_copy_attr
+2020/12/02 17:22:40 vm-1: crash: BUG: multi-read in do_ipv6_getsockopt
+2020/12/02 17:22:41 VMs 2, executed 2363, corpus cover 39942, corpus signal 50190, max signal 47464, crashes 49, repro 0
+2020/12/02 17:22:51 VMs 3, executed 2380, corpus cover 39992, corpus signal 50282, max signal 47522, crashes 49, repro 0
+2020/12/02 17:22:53 vm-2: crash: BUG: multi-read in do_ipv6_setsockopt
+2020/12/02 17:22:54 vm-0: crash: BUG: multi-read in sock_setsockopt
+2020/12/02 17:22:56 vm-3: crash: BUG: multi-read in perf_copy_attr
+2020/12/02 17:23:01 VMs 1, executed 2396, corpus cover 40052, corpus signal 50356, max signal 47618, crashes 52, repro 0
+2020/12/02 17:23:05 vm-1: crash: BUG: multi-read in perf_copy_attr
+2020/12/02 17:23:11 VMs 3, executed 2414, corpus cover 40052, corpus signal 50356, max signal 47618, crashes 53, repro 0
