@@ -522,7 +522,7 @@ func (ctx *linux) isCorrupted(title string, report []byte, format oopsFormat) (b
 	}
 	// Check if the report contains stack trace.
 	if !format.noStackTrace && !bytes.Contains(report, []byte("Call Trace")) &&
-		!bytes.Contains(report, []byte("backtrace")) {
+		!bytes.Contains(report, []byte("backtrace")) && !bytes.Contains(report, []byte("First Stack Trace")) {
 		return true, "no stack trace in report"
 	}
 	if format.noStackTrace {
@@ -727,6 +727,7 @@ var linuxCorruptedTitles = []*regexp.Regexp{
 
 var linuxStackKeywords = []*regexp.Regexp{
 	regexp.MustCompile(`Call Trace`),
+	regexp.MustCompile(`First Stack Trace`),
 	regexp.MustCompile(`Allocated:`),
 	regexp.MustCompile(`Allocated by task [0-9]+:`),
 	regexp.MustCompile(`Freed:`),
@@ -1139,6 +1140,18 @@ var linuxOopses = append([]*oops{
 				title:     compile(`BUG:[[:space:]]*(?:\n|$)`),
 				fmt:       "BUG: corrupted",
 				corrupted: true,
+			},
+			{
+				title:  compile("BUG: multi-read"),
+				report: compile("BUG: multi-read"),
+				fmt:    "BUG: multi-read in %[1]v",
+				stack: &stackFmt{
+					parts: []*regexp.Regexp{
+						compile("First Stack Trace:"),
+						parseStackTrace,
+					},
+					skip: []string{"dfetch_save_stack", "add_address", "strncpy_from_user", "copy_from_user", "copyin", "get_user", "memdup_user"},
+				},
 			},
 		},
 		[]*regexp.Regexp{
