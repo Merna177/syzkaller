@@ -12,7 +12,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
-
+	"sync"
 	"github.com/google/syzkaller/pkg/osutil"
 	"github.com/google/syzkaller/pkg/symbolizer"
 	"github.com/google/syzkaller/pkg/vcs"
